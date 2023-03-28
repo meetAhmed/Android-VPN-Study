@@ -1,4 +1,4 @@
-package com.moduscreate.vpn.study
+package com.moduscreate.vpn.study.utils
 
 import android.util.Log
 

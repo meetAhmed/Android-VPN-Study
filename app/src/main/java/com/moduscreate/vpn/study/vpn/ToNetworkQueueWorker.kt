@@ -1,5 +1,7 @@
-package com.moduscreate.vpn.study
+package com.moduscreate.vpn.study.vpn
 
+import com.moduscreate.vpn.study.protocol.Packet
+import com.moduscreate.vpn.study.utils.SimpleLogger
 import java.io.FileDescriptor
 import java.io.FileInputStream
 import java.nio.ByteBuffer
@@ -12,7 +14,7 @@ object ToNetworkQueueWorker : Runnable {
     var totalInputCount = 0L
 
     fun start(vpnFileDescriptor: FileDescriptor) {
-        if (this::thread.isInitialized && thread.isAlive) throw IllegalStateException("已经在运行")
+        if (this::thread.isInitialized && thread.isAlive) throw IllegalStateException("ToNetworkQueueWorker start() IllegalStateException")
         vpnInput = FileInputStream(vpnFileDescriptor).channel
         thread = Thread(this).apply {
             name = TAG
@@ -26,8 +28,21 @@ object ToNetworkQueueWorker : Runnable {
         }
     }
 
+    /**
+     * ByteBuffer.allocate(20000) - Creating ByteBuffer with capacity 20,000
+     * vpnInput.read(readBuffer) - read data into buffer
+     *
+     * e.g: 8000 bytes read
+     * position = 8000, limit = 20,000
+     *
+     * readBuffer.flip() - flip from 'write' mode to 'read' mode
+     *
+     * position = 0, limit = 8000, capacity = 20,000
+     *
+     * create byte array, to copy actual data from readBuffer into byteBuffer
+     */
     override fun run() {
-        val readBuffer = ByteBuffer.allocate(16384)
+        val readBuffer = ByteBuffer.allocate(20000)
         while (!thread.isInterrupted) {
             var readCount = 0
             try {
@@ -44,7 +59,9 @@ object ToNetworkQueueWorker : Runnable {
                 val byteBuffer = ByteBuffer.wrap(byteArray)
                 totalInputCount += readCount
 
-                SimpleLogger.log("byteBuffer read: $byteBuffer")
+                val packet = Packet(byteBuffer)
+
+                SimpleLogger.log("byteBuffer read: $packet")
             } else if (readCount < 0) {
                 break
             }

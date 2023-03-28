@@ -13,7 +13,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AndroidVPNStudy">
         <service
-            android:name=".MyVpnService"
+            android:name=".vpn.MyVpnService"
             android:exported="true"
             android:permission="android.permission.BIND_VPN_SERVICE">
             <intent-filter>

@@ -1,4 +1,4 @@
-package com.moduscreate.vpn.study
+package com.moduscreate.vpn.study.vpn
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -7,9 +7,9 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.net.VpnService
 import android.os.Build
-import android.os.IBinder
 import android.os.ParcelFileDescriptor
 import androidx.annotation.RequiresApi
+import com.moduscreate.vpn.study.MainActivity
 
 var isMyVpnServiceRunning = false
 
@@ -23,6 +23,13 @@ class MyVpnService : VpnService() {
             activityFlag += PendingIntent.FLAG_MUTABLE
         }
         PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), activityFlag)
+    }
+
+    companion object {
+        const val NOTIFICATION_ID = 1
+        const val NOTIFICATION_CHANNEL_ID = "MyVpnService.Example"
+        const val ACTION_CONNECT = "com.moduscreate.vpn.study.CONNECT"
+        const val ACTION_DISCONNECT = "com.moduscreate.vpn.study.DISCONNECT"
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -51,14 +58,37 @@ class MyVpnService : VpnService() {
     }
 
     private fun disconnect() {
+        ToNetworkQueueWorker.stop()
         vpnInterface.close()
         stopForeground(true)
         isMyVpnServiceRunning = false
     }
 
+    /**
+     * ParcelFileDescriptor: A file descriptor is an object, which a, process uses to read or write to an open file and open network sockets.
+     *
+     * VPNService.Builder: Helper class to create a VPN interface.
+     *
+     * Builder().addAddress(): Add a network address to the VPN interface.
+     *                         IP Address that VPN Server will assign to user on connecting to the server.
+     *                         In simple words, it will be the source address.
+     *
+     * Builder().addDnsServer(): Convenience method to add a DNS server to the VPN connection using a numeric address string.
+     *
+     * Builder().addRoute(): which routes should VPN handle?
+     *                       Route everything - Adding 0.0.0.0/0 (for IPv4), and ::/0 (for IPv6) would route traffic for all destinations through VPN.
+     *                       Route specific - IP addresses which gets routed through tun interface.
+     *
+     * Builder().establish(): Create a VPN interface using the parameters supplied to this builder.
+     *
+     * https://developer.android.com/reference/android/net/VpnService.Builder
+     *
+     * IPv6:
+     *  builder.addAddress("fd00:1:fd00:1:fd00:1:fd00:1", 128)
+     *  builder.addRoute("0:0:0:0:0:0:0:0", 0)
+     */
     private fun createVPNInterface(): ParcelFileDescriptor {
         return Builder()
-            .setSession("VPN-Demo")
             .addAddress("10.8.0.2", 32)
             .addDnsServer("8.8.8.8")
             .addRoute("0.0.0.0", 0)
@@ -82,12 +112,5 @@ class MyVpnService : VpnService() {
             .build()
 
         startForeground(NOTIFICATION_ID, notification)
-    }
-
-    companion object {
-        const val NOTIFICATION_ID = 1
-        const val NOTIFICATION_CHANNEL_ID = "MyVpnService.Example"
-        const val ACTION_CONNECT = "com.moduscreate.vpn.study.CONNECT"
-        const val ACTION_DISCONNECT = "com.moduscreate.vpn.study.DISCONNECT"
     }
 }
