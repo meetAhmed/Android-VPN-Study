@@ -1,5 +1,7 @@
 package com.moduscreate.vpn.study.protocol;
 
+import androidx.annotation.NonNull;
+
 import com.moduscreate.vpn.study.utils.BitUtils;
 
 import java.nio.ByteBuffer;
@@ -7,14 +9,10 @@ import java.nio.ByteBuffer;
 public class UDPHeader {
     public int sourcePort;
     public int destinationPort;
-
     public int length;
     public int checksum;
 
-
-    public UDPHeader() {
-
-    }
+    public UDPHeader() {}
 
     UDPHeader(ByteBuffer buffer) {
         this.sourcePort = BitUtils.getUnsignedShort(buffer.getShort());
@@ -32,6 +30,7 @@ public class UDPHeader {
         buffer.putShort((short) this.checksum);
     }
 
+    @NonNull
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("UDPHeader{");

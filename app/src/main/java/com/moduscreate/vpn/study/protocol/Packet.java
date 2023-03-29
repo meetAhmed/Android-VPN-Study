@@ -1,5 +1,7 @@
 package com.moduscreate.vpn.study.protocol;
 
+import androidx.annotation.NonNull;
+
 import com.moduscreate.vpn.study.utils.BitUtils;
 
 import java.net.UnknownHostException;
@@ -27,10 +29,10 @@ public class Packet {
     public Packet(ByteBuffer buffer) throws UnknownHostException {
         this();
         this.ip4Header = new IP4Header(buffer);
-        if (this.ip4Header.protocol == IP4Header.TransportProtocol.TCP) {
+        if (this.ip4Header.protocol == TransportProtocol.TCP) {
             this.tcpHeader = new TCPHeader(buffer);
             this.isTCP = true;
-        } else if (ip4Header.protocol == IP4Header.TransportProtocol.UDP) {
+        } else if (ip4Header.protocol == TransportProtocol.UDP) {
             this.udpHeader = new UDPHeader(buffer);
             this.isUDP = true;
         }
@@ -44,6 +46,7 @@ public class Packet {
         backingBuffer = null;
     }
 
+    @NonNull
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("Packet{");
@@ -54,15 +57,6 @@ public class Packet {
         sb.append('}');
         return sb.toString();
     }
-
-    public boolean isTCP() {
-        return isTCP;
-    }
-
-    public boolean isUDP() {
-        return isUDP;
-    }
-
 
     public void updateTCPBuffer(ByteBuffer buffer, byte flags, long sequenceNum, long ackNum, int payloadSize) {
         buffer.position(0);
@@ -144,7 +138,7 @@ public class Packet {
         buffer = ByteBuffer.wrap(ip4Header.destinationAddress.getAddress());
         sum += BitUtils.getUnsignedShort(buffer.getShort()) + BitUtils.getUnsignedShort(buffer.getShort());
 
-        sum += IP4Header.TransportProtocol.TCP.getNumber() + tcpLength;
+        sum += TransportProtocol.TCP.getNumber() + tcpLength;
 
         buffer = backingBuffer.duplicate();
         // Clear previous checksum

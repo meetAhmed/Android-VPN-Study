@@ -10,11 +10,13 @@ import android.os.Build
 import android.os.ParcelFileDescriptor
 import androidx.annotation.RequiresApi
 import com.moduscreate.vpn.study.MainActivity
+import com.moduscreate.vpn.study.vpn.udp.UdpReceiveWorker
+import com.moduscreate.vpn.study.vpn.udp.UdpSendWorker
+import com.moduscreate.vpn.study.vpn.udp.UdpSocketCleanWorker
 
 var isMyVpnServiceRunning = false
 
 class MyVpnService : VpnService() {
-
     private lateinit var vpnInterface: ParcelFileDescriptor
 
     private val mConfigureIntent: PendingIntent by lazy {
@@ -30,6 +32,12 @@ class MyVpnService : VpnService() {
         const val NOTIFICATION_CHANNEL_ID = "MyVpnService.Example"
         const val ACTION_CONNECT = "com.moduscreate.vpn.study.CONNECT"
         const val ACTION_DISCONNECT = "com.moduscreate.vpn.study.DISCONNECT"
+    }
+
+    override fun onCreate() {
+        UdpSendWorker.start(this)
+        UdpReceiveWorker.start(this)
+        UdpSocketCleanWorker.start()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -62,6 +70,10 @@ class MyVpnService : VpnService() {
         vpnInterface.close()
         stopForeground(true)
         isMyVpnServiceRunning = false
+
+        UdpSendWorker.stop()
+        UdpReceiveWorker.stop()
+        UdpSocketCleanWorker.stop()
     }
 
     /**

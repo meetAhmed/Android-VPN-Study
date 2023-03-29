@@ -1,5 +1,7 @@
 package com.moduscreate.vpn.study.protocol;
 
+import androidx.annotation.NonNull;
+
 import com.moduscreate.vpn.study.utils.BitUtils;
 
 import java.nio.ByteBuffer;
@@ -14,19 +16,17 @@ public class TCPHeader {
 
     public int sourcePort;
     public int destinationPort;
-
     public long sequenceNumber;
     public long acknowledgementNumber;
-
     public byte dataOffsetAndReserved;
     public int headerLength;
     public byte flags;
     public int window;
-
     public int checksum;
     public int urgentPointer;
-
     public byte[] optionsAndPadding;
+
+    public TCPHeader() {}
 
     public TCPHeader(ByteBuffer buffer) {
         this.sourcePort = BitUtils.getUnsignedShort(buffer.getShort());
@@ -50,10 +50,6 @@ public class TCPHeader {
         }
     }
 
-    public TCPHeader() {
-
-    }
-
     public boolean isFIN() {
         return (flags & FIN) == FIN;
     }
@@ -61,7 +57,6 @@ public class TCPHeader {
     public boolean isSYN() {
         return (flags & SYN) == SYN;
     }
-
 
     public boolean isRST() {
         return (flags & RST) == RST;
@@ -113,11 +108,12 @@ public class TCPHeader {
         if (isPSH()) sb.append("PSH ");
         if (isACK()) sb.append("ACK ");
         if (isURG()) sb.append("URG ");
-        sb.append("seq " + sequenceNumber + " ");
-        sb.append("ack " + acknowledgementNumber + " ");
+        sb.append("seq ").append(sequenceNumber).append(" ");
+        sb.append("ack ").append(acknowledgementNumber).append(" ");
         return sb.toString();
     }
 
+    @NonNull
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("TCPHeader{");

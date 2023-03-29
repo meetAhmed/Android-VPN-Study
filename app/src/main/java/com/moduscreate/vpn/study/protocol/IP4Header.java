@@ -1,5 +1,7 @@
 package com.moduscreate.vpn.study.protocol;
 
+import androidx.annotation.NonNull;
+
 import com.moduscreate.vpn.study.utils.BitUtils;
 
 import java.net.InetAddress;
@@ -56,31 +58,6 @@ public class IP4Header {
 
     public int optionsAndPadding;
 
-    public enum TransportProtocol {
-        TCP(6),
-        UDP(17),
-        Other(0xFF);
-
-        private final int protocolNumber;
-
-        TransportProtocol(int protocolNumber) {
-            this.protocolNumber = protocolNumber;
-        }
-
-        private static TransportProtocol numberToEnum(int protocolNumber) {
-            if (protocolNumber == 6)
-                return TCP;
-            else if (protocolNumber == 17)
-                return UDP;
-            else
-                return Other;
-        }
-
-        public int getNumber() {
-            return this.protocolNumber;
-        }
-    }
-
     public IP4Header() {}
 
     IP4Header(ByteBuffer buffer) throws UnknownHostException {
@@ -124,6 +101,7 @@ public class IP4Header {
         buffer.put(this.destinationAddress.getAddress());
     }
 
+    @NonNull
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("IP4Header{");
