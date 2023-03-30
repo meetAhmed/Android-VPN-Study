@@ -14,8 +14,6 @@ import com.moduscreate.vpn.study.vpn.udp.UdpReceiveWorker
 import com.moduscreate.vpn.study.vpn.udp.UdpSendWorker
 import com.moduscreate.vpn.study.vpn.udp.UdpSocketCleanWorker
 
-var isMyVpnServiceRunning = false
-
 class MyVpnService : VpnService() {
     private lateinit var vpnInterface: ParcelFileDescriptor
 
@@ -62,11 +60,13 @@ class MyVpnService : VpnService() {
         vpnInterface = createVPNInterface()
         val fileDescriptor = vpnInterface.fileDescriptor
         ToNetworkQueueWorker.start(fileDescriptor)
+        ToDeviceQueueWorker.start(fileDescriptor)
         isMyVpnServiceRunning = true
     }
 
     private fun disconnect() {
         ToNetworkQueueWorker.stop()
+        ToDeviceQueueWorker.stop()
         vpnInterface.close()
         stopForeground(true)
         isMyVpnServiceRunning = false

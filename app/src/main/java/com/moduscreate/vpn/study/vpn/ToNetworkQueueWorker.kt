@@ -1,22 +1,13 @@
 package com.moduscreate.vpn.study.vpn
 
-import com.moduscreate.vpn.study.dataModels.ManagedDatagramChannel
-import com.moduscreate.vpn.study.dataModels.UdpTunnel
+import com.moduscreate.vpn.study.extensions.toHex
 import com.moduscreate.vpn.study.protocol.Packet
 import com.moduscreate.vpn.study.utils.SimpleLogger
+import com.moduscreate.vpn.study.utils.SimpleLoggerTag
 import java.io.FileDescriptor
 import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
-import java.nio.channels.Selector
-import java.util.concurrent.ArrayBlockingQueue
-
-val deviceToNetworkUDPQueue = ArrayBlockingQueue<Packet>(1024)
-val udpTunnelQueue = ArrayBlockingQueue<UdpTunnel>(1024)
-val udpSocketMap = HashMap<String, ManagedDatagramChannel>()
-val udpNioSelector: Selector = Selector.open()
-val networkToDeviceQueue = ArrayBlockingQueue<ByteBuffer>(1024)
-const val UDP_SOCKET_IDLE_TIMEOUT = 60
 
 object ToNetworkQueueWorker : Runnable {
     private const val TAG = "ToNetworkQueueWorker"
@@ -71,11 +62,13 @@ object ToNetworkQueueWorker : Runnable {
                 totalInputCount += readCount
 
                 val packet = Packet(byteBuffer)
-                if (packet.isUDP) {
-                    deviceToNetworkUDPQueue.offer(packet)
+
+                when {
+                    packet.isUDP -> deviceToNetworkUDPQueue.offer(packet)
+                    packet.isTCP -> deviceToNetworkTCPQueue.offer(packet)
                 }
 
-                SimpleLogger.log("byteBuffer read: $packet")
+                SimpleLogger.log(byteBuffer.toHex(), SimpleLoggerTag.PacketFromDevice)
             } else if (readCount < 0) {
                 break
             }

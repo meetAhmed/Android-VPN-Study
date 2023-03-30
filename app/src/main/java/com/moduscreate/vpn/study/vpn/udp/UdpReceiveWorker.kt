@@ -7,6 +7,7 @@ import com.moduscreate.vpn.study.extensions.toHex
 import com.moduscreate.vpn.study.protocol.Packet
 import com.moduscreate.vpn.study.utils.IpUtil
 import com.moduscreate.vpn.study.utils.SimpleLogger
+import com.moduscreate.vpn.study.utils.SimpleLoggerTag
 import com.moduscreate.vpn.study.vpn.networkToDeviceQueue
 import com.moduscreate.vpn.study.vpn.udpNioSelector
 import com.moduscreate.vpn.study.vpn.udpSocketMap
@@ -40,16 +41,25 @@ object UdpReceiveWorker : Runnable {
     private fun sendUdpPacket(tunnel: UdpTunnel, source: InetSocketAddress, data: ByteArray) {
         val packet = IpUtil.buildUdpPacket(tunnel.remote, tunnel.local, ipId.addAndGet(1))
 
+        // Creating byte buffer
         val byteBuffer = ByteBuffer.allocate(UDP_HEADER_FULL_SIZE + data.size)
+
+        // move position to header size and insert data in buffer
         byteBuffer.apply {
             position(UDP_HEADER_FULL_SIZE)
             put(data)
         }
+
+        // insert packet into buffer
         packet.updateUDPBuffer(byteBuffer, data.size)
+
+        // move buffer position to the last
         byteBuffer.position(UDP_HEADER_FULL_SIZE + data.size)
+
+        // send packet to device
         networkToDeviceQueue.offer(byteBuffer)
 
-        SimpleLogger.log("networkToDeviceQueue packet: ${byteBuffer.toHex()}")
+        SimpleLogger.log("UDP Packet: ${byteBuffer.toHex()}", SimpleLoggerTag.PacketToDevice)
     }
 
     /**

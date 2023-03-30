@@ -87,8 +87,12 @@ public class Packet {
     }
 
     public void updateUDPBuffer(ByteBuffer buffer, int payloadSize) {
+        // move buffer to position 0
         buffer.position(0);
+
+        // insert udp header
         fillHeader(buffer);
+
         backingBuffer = buffer;
 
         int udpTotalLength = UDP_HEADER_SIZE + payloadSize;
@@ -99,6 +103,7 @@ public class Packet {
         backingBuffer.putShort(IP4_HEADER_SIZE + 6, (short) 0);
         udpHeader.checksum = 0;
 
+        // Update total length of IPv4
         int ip4TotalLength = IP4_HEADER_SIZE + udpTotalLength;
         backingBuffer.putShort(2, (short) ip4TotalLength);
         ip4Header.totalLength = ip4TotalLength;

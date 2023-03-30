@@ -3,9 +3,13 @@ package com.moduscreate.vpn.study.utils
 import android.util.Log
 
 object SimpleLogger {
-    private const val generalTag = "SimpleLogger"
-
-    fun log(text: String?, tag: String = generalTag) {
-        Log.i(tag, text ?: "Null")
+    fun log(text: String?, tag: SimpleLoggerTag = SimpleLoggerTag.General) {
+        Log.i(tag.tagValue, text ?: "Null")
     }
+}
+
+enum class SimpleLoggerTag(val tagValue: String) {
+    General("SimpleLogger"),
+    PacketToDevice("Packet_To_Device"),
+    PacketFromDevice("Packet_From_Device"),
 }

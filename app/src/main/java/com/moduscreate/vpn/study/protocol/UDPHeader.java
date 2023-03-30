@@ -25,7 +25,6 @@ public class UDPHeader {
     void fillHeader(ByteBuffer buffer) {
         buffer.putShort((short) this.sourcePort);
         buffer.putShort((short) this.destinationPort);
-
         buffer.putShort((short) this.length);
         buffer.putShort((short) this.checksum);
     }

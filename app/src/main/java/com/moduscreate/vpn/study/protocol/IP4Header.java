@@ -14,6 +14,7 @@ import java.nio.ByteBuffer;
  * TOS = Type of service
  * TTL = Time to live
  * Protocol = Name of the protocol to which the data is to be passed (8 bits)
+ * Total length = Indicates the entire size of the IP packet (header and data) in bytes
  *
  * +------------------------------------------------------------+
  * |      4B       |     4B    |     8B    |        16B         |
