@@ -30,9 +30,15 @@
 <li><a href="https://www.geeksforgeeks.org/introduction-and-ipv4-datagram-header/">IPv4 Header</a></li>
 <li><a href="https://networklessons.com/cisco/ccie-routing-switching-written/tcp-header">TCP Header</a></li>
 <li><a href="https://www.geeksforgeeks.org/user-datagram-protocol-udp/">UDP Header</a></li>
+<li><a href="https://www.baeldung.com/kotlin/bitwise-operators">Bitwise Operations in Kotlin</a></li>
 <li><a href="https://developer.android.com/reference/android/net/VpnService.Builder">VpnService</a></li>
 <li><a href="https://developer.android.com/reference/java/nio/channels/Selector">Selectors</a></li>
 <li><a href="https://www.baeldung.com/java-nio-selector">Introduction to the Java NIO Selector</a></li>
-
 </ol>
 <hr/>
+
+<h4>Demo Video</h4>
+https://user-images.githubusercontent.com/42321000/229091553-a1dc1c03-cce3-4a04-a928-bab0f65354ff.mp4
+
+
+
