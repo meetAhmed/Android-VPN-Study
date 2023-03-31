@@ -9,6 +9,9 @@ import java.nio.ByteBuffer
 import java.nio.channels.SelectionKey
 import kotlin.experimental.or
 
+/**
+ * Connection reset.
+ */
 fun TcpPipe.closeRst() {
     clean()
     TcpWorker.sendTcpPack(this, TCPHeader.RST.toByte())
@@ -46,6 +49,9 @@ fun TcpPipe.doRead() {
     }
 }
 
+/**
+ * Connection.
+ */
 fun TcpPipe.doConnect() {
     remoteSocketChannel.finishConnect()
     timestamp = System.currentTimeMillis()
@@ -63,6 +69,9 @@ fun TcpPipe.doWrite() {
     }
 }
 
+/**
+ * Remove connection from TCP Pipe.
+ */
 fun TcpPipe.clean() {
     kotlin.runCatching {
         if (remoteSocketChannel.isOpen) {
@@ -73,6 +82,9 @@ fun TcpPipe.clean() {
     }.exceptionOrNull()?.printStackTrace()
 }
 
+/**
+ * Connection close by device.
+ */
 fun TcpPipe.closeUpStream() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
         kotlin.runCatching {
@@ -92,6 +104,9 @@ fun TcpPipe.closeUpStream() {
     }
 }
 
+/**
+ * Connection closed by destination.
+ */
 fun TcpPipe.closeDownStream() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
         kotlin.runCatching {

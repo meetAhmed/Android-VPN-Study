@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.ParcelFileDescriptor
 import androidx.annotation.RequiresApi
 import com.moduscreate.vpn.study.MainActivity
+import com.moduscreate.vpn.study.vpn.tcp.TcpWorker
 import com.moduscreate.vpn.study.vpn.udp.UdpReceiveWorker
 import com.moduscreate.vpn.study.vpn.udp.UdpSendWorker
 import com.moduscreate.vpn.study.vpn.udp.UdpSocketCleanWorker
@@ -36,6 +37,7 @@ class MyVpnService : VpnService() {
         UdpSendWorker.start(this)
         UdpReceiveWorker.start(this)
         UdpSocketCleanWorker.start()
+        TcpWorker.start(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -74,6 +76,7 @@ class MyVpnService : VpnService() {
         UdpSendWorker.stop()
         UdpReceiveWorker.stop()
         UdpSocketCleanWorker.stop()
+        TcpWorker.stop()
     }
 
     /**

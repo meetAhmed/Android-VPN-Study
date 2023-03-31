@@ -59,17 +59,24 @@ public class Packet {
     }
 
     public void updateTCPBuffer(ByteBuffer buffer, byte flags, long sequenceNum, long ackNum, int payloadSize) {
+        // move buffer to position 0
         buffer.position(0);
+
+        // insert udp header
         fillHeader(buffer);
+
         backingBuffer = buffer;
 
         tcpHeader.flags = flags;
+
         backingBuffer.put(IP4_HEADER_SIZE + 13, flags);
 
         tcpHeader.sequenceNumber = sequenceNum;
+
         backingBuffer.putInt(IP4_HEADER_SIZE + 4, (int) sequenceNum);
 
         tcpHeader.acknowledgementNumber = ackNum;
+
         backingBuffer.putInt(IP4_HEADER_SIZE + 8, (int) ackNum);
 
         // Reset header size, since we don't need options

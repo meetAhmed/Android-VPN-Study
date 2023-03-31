@@ -8,6 +8,7 @@ import com.moduscreate.vpn.study.protocol.Packet
 import com.moduscreate.vpn.study.protocol.TCPHeader
 import com.moduscreate.vpn.study.utils.IpUtil
 import com.moduscreate.vpn.study.utils.SimpleLogger
+import com.moduscreate.vpn.study.utils.SimpleLoggerTag
 import com.moduscreate.vpn.study.vpn.deviceToNetworkTCPQueue
 import com.moduscreate.vpn.study.vpn.networkToDeviceQueue
 import com.moduscreate.vpn.study.vpn.tcpNioSelector
@@ -127,7 +128,8 @@ object TcpWorker : Runnable {
     }
 
     /**
-     * Check packet flag(s) and perform accordingly
+     * Check packet flag(s) and perform accordingly.
+     * Packet sent from device to Destination.
      */
     private fun handlePacket(packet: Packet, tcpPipe: TcpPipe) {
         val tcpHeader = packet.tcpHeader
@@ -168,13 +170,18 @@ object TcpWorker : Runnable {
 
         tcpPipe.packId++
 
+        // Creating byte buffer
         val byteBuffer = ByteBuffer.allocate(TCP_HEADER_SIZE + dataSize)
+
+        // move position to header size
         byteBuffer.position(TCP_HEADER_SIZE)
 
+        // insert data in buffer
         data?.let {
             byteBuffer.put(it)
         }
 
+        // insert packet into buffer
         packet?.updateTCPBuffer(
             byteBuffer,
             flag,
@@ -186,7 +193,10 @@ object TcpWorker : Runnable {
 
         byteBuffer.position(TCP_HEADER_SIZE + dataSize)
 
+        // send packet to device
         networkToDeviceQueue.offer(byteBuffer)
+
+        SimpleLogger.log("TCP Packet: ${byteBuffer.toHex()}", SimpleLoggerTag.PacketToDevice)
 
         if ((flag and TCPHeader.SYN.toByte()) != 0.toByte()) {
             tcpPipe.mySequenceNum++
@@ -201,8 +211,9 @@ object TcpWorker : Runnable {
 
     /**
      * Write data to remote channel.
+     * Data sent from device to Destination.
      *
-     * buffer?.compact(): Element between position and limit are copied to begining.
+     * buffer?.compact(): Element between position and limit are copied to beginning.
      */
     fun tryFlushWrite(tcpPipe: TcpPipe): Boolean {
         val channel: SocketChannel = tcpPipe.remoteSocketChannel
@@ -210,7 +221,7 @@ object TcpWorker : Runnable {
 
         /**
          * Check if remote connection is closed and buffer still has some data to send,
-         * then send FIN + ACK packet.
+         * then send FIN + ACK packet to device.
          */
         if (tcpPipe.remoteSocketChannel.socket().isOutputShutdown && buffer?.remaining() != 0) {
             sendTcpPack(tcpPipe, TCPHeader.FIN.toByte() or TCPHeader.ACK.toByte())
@@ -221,7 +232,7 @@ object TcpWorker : Runnable {
         /**
          * Channel is not connected yet.
          * Get key for this channel and add Write Interest.
-         * Return from here, since we can not read from channel right now.
+         * Return from here, since we can not write to channel right now.
          */
         if (!channel.isConnected) {
             val key = tcpPipe.remoteSocketChannelKey
@@ -251,7 +262,7 @@ object TcpWorker : Runnable {
 
         buffer?.clear()
 
-        /// if remote channel is not active, close connection
+        // if remote channel is not active, close connection
         if (!tcpPipe.upActive) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 tcpPipe.remoteSocketChannel.shutdownOutput()

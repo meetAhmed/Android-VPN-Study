@@ -56,7 +56,10 @@ fun TcpWorker.handleFin(packet: Packet, tcpPipe: TcpPipe) {
 }
 
 /**
- * TCP hand shake. Send packet if device data size is not 0.
+ * TCP hand shake.
+ * Packet sent from device to network.
+ * Write packet data to Destination, if it is not empty.
+ * Send back ACK to device.
  */
 fun TcpWorker.handleAck(packet: Packet, tcpPipe: TcpPipe) {
     if (tcpPipe.tcbStatus == TCBStatus.SYN_RECEIVED) {
