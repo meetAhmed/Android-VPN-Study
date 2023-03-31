@@ -37,8 +37,4 @@
 </ol>
 <hr/>
 
-<h4>Demo Video</h4>
-https://user-images.githubusercontent.com/42321000/229091553-a1dc1c03-cce3-4a04-a928-bab0f65354ff.mp4
-
-
 
