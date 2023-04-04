@@ -7,6 +7,7 @@ import com.moduscreate.vpn.study.extensions.*
 import com.moduscreate.vpn.study.protocol.Packet
 import com.moduscreate.vpn.study.protocol.TCPHeader
 import com.moduscreate.vpn.study.utils.IpUtil
+import com.moduscreate.vpn.study.utils.PacketLogsWorker
 import com.moduscreate.vpn.study.utils.SimpleLogger
 import com.moduscreate.vpn.study.utils.SimpleLoggerTag
 import com.moduscreate.vpn.study.vpn.deviceToNetworkTCPQueue
@@ -79,7 +80,8 @@ object TcpWorker : Runnable {
                 pipeMap[ipAndPort] = pipe
                 pipe
             } else {
-                pipeMap[ipAndPort] ?: throw IllegalStateException("There should be no null key in pipeMap:$ipAndPort")
+                pipeMap[ipAndPort]
+                    ?: throw IllegalStateException("There should be no null key in pipeMap:$ipAndPort")
             }
             handlePacket(packet, tcpPipe)
         }
@@ -118,7 +120,7 @@ object TcpWorker : Runnable {
                         }
                         null
                     }.exceptionOrNull()?.let {
-                        SimpleLogger.log("TcpWorker error $it")
+                        SimpleLogger.log("TcpWorker error $it ${tcpPipe?.destinationAddress?.hostName}")
                         it.printStackTrace()
                         tcpPipe?.closeRst()
                     }
@@ -157,8 +159,6 @@ object TcpWorker : Runnable {
      * Send packet to device.
      */
     fun sendTcpPack(tcpPipe: TcpPipe, flag: Byte, data: ByteArray? = null) {
-        val dataSize = data?.size ?: 0
-
         val packet = IpUtil.buildTcpPacket(
             tcpPipe.destinationAddress,
             tcpPipe.sourceAddress,
@@ -170,33 +170,22 @@ object TcpWorker : Runnable {
 
         tcpPipe.packId++
 
-        // Creating byte buffer
-        val byteBuffer = ByteBuffer.allocate(TCP_HEADER_SIZE + dataSize)
-
-        // move position to header size
-        byteBuffer.position(TCP_HEADER_SIZE)
-
-        // insert data in buffer
-        data?.let {
-            byteBuffer.put(it)
-        }
-
         // insert packet into buffer
-        packet?.updateTCPBuffer(
-            byteBuffer,
+        val byteBuffer = packet?.updateTCPBuffer(
             flag,
             tcpPipe.mySequenceNum,
             tcpPipe.myAcknowledgementNum,
-            dataSize
+            data
         )
-        packet?.release()
 
-        byteBuffer.position(TCP_HEADER_SIZE + dataSize)
+        if (byteBuffer != null) {
+            PacketLogsWorker.addPacketToQueue(byteBuffer, packet, false)
+        }
+
+        packet?.release()
 
         // send packet to device
         networkToDeviceQueue.offer(byteBuffer)
-
-        SimpleLogger.log("TCP Packet: ${byteBuffer.toHex()}", SimpleLoggerTag.PacketToDevice)
 
         if ((flag and TCPHeader.SYN.toByte()) != 0.toByte()) {
             tcpPipe.mySequenceNum++
@@ -205,7 +194,7 @@ object TcpWorker : Runnable {
             tcpPipe.mySequenceNum++
         }
         if ((flag and TCPHeader.ACK.toByte()) != 0.toByte()) {
-            tcpPipe.mySequenceNum += dataSize
+            tcpPipe.mySequenceNum += data?.size ?: 0
         }
     }
 

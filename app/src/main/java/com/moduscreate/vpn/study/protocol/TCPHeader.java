@@ -101,15 +101,16 @@ public class TCPHeader {
     }
 
     public String printSimple() {
-        final StringBuilder sb = new StringBuilder("");
+        final StringBuilder sb = new StringBuilder("[");
         if (isFIN()) sb.append("FIN ");
         if (isSYN()) sb.append("SYN ");
         if (isRST()) sb.append("RST ");
         if (isPSH()) sb.append("PSH ");
         if (isACK()) sb.append("ACK ");
         if (isURG()) sb.append("URG ");
-        sb.append("seq ").append(sequenceNumber).append(" ");
-        sb.append("ack ").append(acknowledgementNumber).append(" ");
+        sb.append("]");
+//        sb.append(" [seq ").append(sequenceNumber).append("]");
+//        sb.append(" [ack ").append(acknowledgementNumber).append("]");
         return sb.toString();
     }
 

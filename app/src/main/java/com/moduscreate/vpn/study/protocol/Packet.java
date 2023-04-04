@@ -3,6 +3,7 @@ package com.moduscreate.vpn.study.protocol;
 import androidx.annotation.NonNull;
 
 import com.moduscreate.vpn.study.utils.BitUtils;
+import com.moduscreate.vpn.study.utils.SimpleLogger;
 
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -58,39 +59,49 @@ public class Packet {
         return sb.toString();
     }
 
-    public void updateTCPBuffer(ByteBuffer buffer, byte flags, long sequenceNum, long ackNum, int payloadSize) {
+    public ByteBuffer updateTCPBuffer(byte flags, long sequenceNum, long ackNum, byte[] payload) {
+        // Creating byte buffer
+        ByteBuffer byteBuffer = ByteBuffer.allocate(IP4_HEADER_SIZE + TCP_HEADER_SIZE + (payload == null ? 0 : payload.length));
+
+        if (payload != null) {
+            byteBuffer.position(IP4_HEADER_SIZE + TCP_HEADER_SIZE);
+            byteBuffer.put(payload);
+        }
+
         // move buffer to position 0
-        buffer.position(0);
+        byteBuffer.position(0);
 
-        // insert udp header
-        fillHeader(buffer);
-
-        backingBuffer = buffer;
+        // insert tcp header
+        fillHeader(byteBuffer);
 
         tcpHeader.flags = flags;
 
-        backingBuffer.put(IP4_HEADER_SIZE + 13, flags);
+        byteBuffer.put(IP4_HEADER_SIZE + 13, flags);
 
         tcpHeader.sequenceNumber = sequenceNum;
 
-        backingBuffer.putInt(IP4_HEADER_SIZE + 4, (int) sequenceNum);
+        byteBuffer.putInt(IP4_HEADER_SIZE + 4, (int) sequenceNum);
 
         tcpHeader.acknowledgementNumber = ackNum;
 
-        backingBuffer.putInt(IP4_HEADER_SIZE + 8, (int) ackNum);
+        byteBuffer.putInt(IP4_HEADER_SIZE + 8, (int) ackNum);
 
         // Reset header size, since we don't need options
         byte dataOffset = (byte) (TCP_HEADER_SIZE << 2);
         tcpHeader.dataOffsetAndReserved = dataOffset;
-        backingBuffer.put(IP4_HEADER_SIZE + 12, dataOffset);
+        byteBuffer.put(IP4_HEADER_SIZE + 12, dataOffset);
 
-        updateTCPChecksum(payloadSize);
+        updateTCPChecksum(payload == null ? 0 : payload.length, byteBuffer);
 
-        int ip4TotalLength = IP4_HEADER_SIZE + TCP_HEADER_SIZE + payloadSize;
-        backingBuffer.putShort(2, (short) ip4TotalLength);
+        int ip4TotalLength = IP4_HEADER_SIZE + TCP_HEADER_SIZE + (payload == null ? 0 : payload.length);
+        byteBuffer.putShort(2, (short) ip4TotalLength);
         ip4Header.totalLength = ip4TotalLength;
 
-        updateIP4Checksum();
+        updateIP4Checksum(byteBuffer);
+
+        byteBuffer.position(ip4TotalLength);
+
+        return byteBuffer;
     }
 
     public void updateUDPBuffer(ByteBuffer buffer, int payloadSize) {
@@ -115,11 +126,11 @@ public class Packet {
         backingBuffer.putShort(2, (short) ip4TotalLength);
         ip4Header.totalLength = ip4TotalLength;
 
-        updateIP4Checksum();
+        updateIP4Checksum(backingBuffer);
     }
 
-    private void updateIP4Checksum() {
-        ByteBuffer buffer = backingBuffer.duplicate();
+    private void updateIP4Checksum(ByteBuffer byteBuffer) {
+        ByteBuffer buffer = byteBuffer.duplicate();
         buffer.position(0);
 
         // Clear previous checksum
@@ -136,10 +147,10 @@ public class Packet {
 
         sum = ~sum;
         ip4Header.headerChecksum = sum;
-        backingBuffer.putShort(10, (short) sum);
+        byteBuffer.putShort(10, (short) sum);
     }
 
-    private void updateTCPChecksum(int payloadSize) {
+    private void updateTCPChecksum(int payloadSize, ByteBuffer byteBuffer) {
         int sum = 0;
         int tcpLength = TCP_HEADER_SIZE + payloadSize;
 
@@ -152,7 +163,7 @@ public class Packet {
 
         sum += TransportProtocol.TCP.getNumber() + tcpLength;
 
-        buffer = backingBuffer.duplicate();
+        buffer = byteBuffer.duplicate();
         // Clear previous checksum
         buffer.putShort(IP4_HEADER_SIZE + 16, (short) 0);
 
@@ -170,7 +181,7 @@ public class Packet {
 
         sum = ~sum;
         tcpHeader.checksum = sum;
-        backingBuffer.putShort(IP4_HEADER_SIZE + 16, (short) sum);
+        byteBuffer.putShort(IP4_HEADER_SIZE + 16, (short) sum);
     }
 
     private void fillHeader(ByteBuffer buffer) {

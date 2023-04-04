@@ -3,6 +3,7 @@ package com.moduscreate.vpn.study.vpn
 import com.moduscreate.vpn.study.dataModels.ManagedDatagramChannel
 import com.moduscreate.vpn.study.dataModels.UdpTunnel
 import com.moduscreate.vpn.study.protocol.Packet
+import com.moduscreate.vpn.study.utils.TcpDumpData
 import java.nio.ByteBuffer
 import java.nio.channels.Selector
 import java.util.concurrent.ArrayBlockingQueue
@@ -22,3 +23,6 @@ const val UDP_SOCKET_IDLE_TIMEOUT = 60
 // Network
 val networkToDeviceQueue = ArrayBlockingQueue<ByteBuffer>(1024)
 var isMyVpnServiceRunning = false
+
+// Logs
+val tcpDumDataQueue = HashMap<String, TcpDumpData>()

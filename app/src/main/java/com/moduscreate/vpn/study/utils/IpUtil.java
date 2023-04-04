@@ -66,10 +66,10 @@ public class IpUtil {
         TCPHeader tcpHeader = new TCPHeader();
         tcpHeader.acknowledgementNumber = ack;
         tcpHeader.checksum = 0;
-        tcpHeader.dataOffsetAndReserved = -96;
+        tcpHeader.dataOffsetAndReserved = 0;
         tcpHeader.destinationPort = dest.getPort();
         tcpHeader.flags = flag;
-        tcpHeader.headerLength = 40;
+        tcpHeader.headerLength = 0;
         tcpHeader.optionsAndPadding = null;
         tcpHeader.sequenceNumber = seq;
         tcpHeader.sourcePort = source.getPort();

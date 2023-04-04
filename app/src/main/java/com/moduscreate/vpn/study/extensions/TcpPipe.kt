@@ -23,7 +23,7 @@ fun TcpPipe.closeRst() {
  * Read from remote channel and send packet to device.
  */
 fun TcpPipe.doRead() {
-    val buffer = ByteBuffer.allocate(4096)
+    val buffer = ByteBuffer.allocate(20000)
     var isQuitType = false
 
     while (!TcpWorker.thread.isInterrupted) {
