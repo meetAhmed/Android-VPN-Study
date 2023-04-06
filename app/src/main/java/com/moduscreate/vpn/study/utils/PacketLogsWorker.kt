@@ -61,7 +61,7 @@ object PacketLogsWorker : Runnable {
                             SimpleLoggerTag.TcpPacket
                         )
                     }
-//                    iterator.remove()
+                    iterator.remove()
                     SimpleLogger.log(
                         "------------------------------------------",
                         SimpleLoggerTag.TcpPacket
@@ -72,10 +72,6 @@ object PacketLogsWorker : Runnable {
                     )
                 }
             }
-            SimpleLogger.log(
-                "------------------------------------------",
-                SimpleLoggerTag.TcpPacket
-            )
             SimpleLogger.log(
                 "------------------------------------------",
                 SimpleLoggerTag.TcpPacket

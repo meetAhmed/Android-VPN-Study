@@ -1,11 +1,16 @@
 package com.moduscreate.vpn.study.vpn
 
+import com.moduscreate.vpn.study.extensions.toHex
+import com.moduscreate.vpn.study.extensions.toReadableTime
 import com.moduscreate.vpn.study.protocol.Packet
-import com.moduscreate.vpn.study.utils.PacketLogsWorker
+import com.moduscreate.vpn.study.utils.SimpleLogger
+import com.moduscreate.vpn.study.utils.SimpleLoggerTag
+import com.moduscreate.vpn.study.vpn.tcp.TcpWorkerImproved
 import java.io.FileDescriptor
 import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
+import java.util.*
 
 object ToNetworkQueueWorker : Runnable {
     private const val TAG = "ToNetworkQueueWorker"
@@ -49,6 +54,7 @@ object ToNetworkQueueWorker : Runnable {
                 readCount = vpnInput.read(readBuffer)
             } catch (e: Exception) {
                 e.printStackTrace()
+                SimpleLogger.log("vpnInput.read(readBuffer): $e", SimpleLoggerTag.TcpPacket)
                 continue
             }
             if (readCount > 0) {
@@ -57,19 +63,17 @@ object ToNetworkQueueWorker : Runnable {
                 readBuffer.get(byteArray)
 
                 val byteBuffer = ByteBuffer.wrap(byteArray)
-                totalInputCount += readCount
-
                 val packet = Packet(byteBuffer)
 
                 when {
                     packet.isUDP -> deviceToNetworkUDPQueue.offer(packet)
                     packet.isTCP -> {
-                        deviceToNetworkTCPQueue.offer(packet)
-                        PacketLogsWorker.addPacketToQueue(byteBuffer, packet)
+//                        deviceToNetworkTCPQueue.offer(packet)
+                        SimpleLogger.logPacket(packet, byteBuffer, true)
+                        TcpWorkerImproved.handlePacket(packet)
                     }
+                    else -> SimpleLogger.log("Unknown packet received: ${byteBuffer.toHex()}", SimpleLoggerTag.TcpPacket)
                 }
-
-//                SimpleLogger.log(byteBuffer.toHex(), SimpleLoggerTag.PacketFromDevice)
             } else if (readCount < 0) {
                 break
             }

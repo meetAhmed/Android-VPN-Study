@@ -10,8 +10,7 @@ import android.os.Build
 import android.os.ParcelFileDescriptor
 import androidx.annotation.RequiresApi
 import com.moduscreate.vpn.study.MainActivity
-import com.moduscreate.vpn.study.utils.PacketLogsWorker
-import com.moduscreate.vpn.study.vpn.tcp.TcpWorker
+import com.moduscreate.vpn.study.vpn.tcp.TcpWorkerImproved
 import com.moduscreate.vpn.study.vpn.udp.UdpReceiveWorker
 import com.moduscreate.vpn.study.vpn.udp.UdpSendWorker
 import com.moduscreate.vpn.study.vpn.udp.UdpSocketCleanWorker
@@ -38,8 +37,9 @@ class MyVpnService : VpnService() {
         UdpSendWorker.start(this)
         UdpReceiveWorker.start(this)
         UdpSocketCleanWorker.start()
-        TcpWorker.start(this)
-        PacketLogsWorker.start()
+//        TcpWorker.start(this)
+        TcpWorkerImproved.start(this)
+//        PacketLogsWorker.start()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -70,7 +70,6 @@ class MyVpnService : VpnService() {
 
     private fun disconnect() {
         ToNetworkQueueWorker.stop()
-        ToDeviceQueueWorker.stop()
         vpnInterface.close()
         stopForeground(true)
         isMyVpnServiceRunning = false
@@ -78,8 +77,9 @@ class MyVpnService : VpnService() {
         UdpSendWorker.stop()
         UdpReceiveWorker.stop()
         UdpSocketCleanWorker.stop()
-        TcpWorker.stop()
-        PacketLogsWorker.stop()
+//        TcpWorker.stop()
+        TcpWorkerImproved.stop()
+//        PacketLogsWorker.stop()
     }
 
     /**
@@ -107,9 +107,17 @@ class MyVpnService : VpnService() {
      */
     private fun createVPNInterface(): ParcelFileDescriptor {
         return Builder()
-            .addAddress("10.8.0.2", 32)
-            .addDnsServer("8.8.8.8")
+            .addAddress("10.0.0.2", 32)
             .addRoute("0.0.0.0", 0)
+            .addDnsServer("114.114.114.114")
+            .setSession("VPN-Demo")
+            .setBlocking(true)
+            .setConfigureIntent(mConfigureIntent)
+            .also {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    it.setMetered(false)
+                }
+            }
             .establish() ?: throw IllegalStateException("createVPNInterface illegal state")
     }
 

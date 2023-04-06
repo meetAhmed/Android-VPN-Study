@@ -10,6 +10,7 @@ import com.moduscreate.vpn.study.utils.IpUtil
 import com.moduscreate.vpn.study.utils.PacketLogsWorker
 import com.moduscreate.vpn.study.utils.SimpleLogger
 import com.moduscreate.vpn.study.utils.SimpleLoggerTag
+import com.moduscreate.vpn.study.vpn.ToDeviceQueueWorker
 import com.moduscreate.vpn.study.vpn.deviceToNetworkTCPQueue
 import com.moduscreate.vpn.study.vpn.networkToDeviceQueue
 import com.moduscreate.vpn.study.vpn.tcpNioSelector
@@ -54,7 +55,7 @@ object TcpWorker : Runnable {
             }
             handleReadFromVpn()
             handleSockets()
-            Thread.sleep(1)
+//            Thread.sleep(1)
         }
     }
 
@@ -74,16 +75,18 @@ object TcpWorker : Runnable {
             val ipAndPort = (destinationAddress.hostAddress?.plus(":")
                 ?: "unknown-host-address") + destinationPort + ":" + sourcePort
 
-            val tcpPipe = if (!pipeMap.containsKey(ipAndPort)) {
+            SimpleLogger.logPacket(packet, "handleReadFromVpn()")
+
+            if (!pipeMap.containsKey(ipAndPort)) {
                 val pipe = TcpPipe(ipAndPort, packet)
-                pipe.tryConnect(vpnService)
+                handlePacket(packet, pipe)
                 pipeMap[ipAndPort] = pipe
-                pipe
+                pipe.tryConnect(vpnService)
             } else {
-                pipeMap[ipAndPort]
+                val pipe = pipeMap[ipAndPort]
                     ?: throw IllegalStateException("There should be no null key in pipeMap:$ipAndPort")
+                handlePacket(packet, pipe)
             }
-            handlePacket(packet, tcpPipe)
         }
     }
 
@@ -137,21 +140,21 @@ object TcpWorker : Runnable {
         val tcpHeader = packet.tcpHeader
         when {
             // Sync
-            tcpHeader.isSYN -> {
-                handleSyn(packet, tcpPipe)
-            }
-            // Reset
-            tcpHeader.isRST -> {
-                handleRst(tcpPipe)
-            }
-            // Connection close
-            tcpHeader.isFIN -> {
-                handleFin(packet, tcpPipe)
-            }
-            // Acknowledgement
-            tcpHeader.isACK -> {
-                handleAck(packet, tcpPipe)
-            }
+//            tcpHeader.isSYN -> {
+//                handleSyn(packet, tcpPipe)
+//            }
+//            // Reset
+//            tcpHeader.isRST -> {
+//                handleRst(tcpPipe)
+//            }
+//            // Connection close
+//            tcpHeader.isFIN -> {
+//                handleFin(packet, tcpPipe)
+//            }
+//            // Acknowledgement
+//            tcpHeader.isACK -> {
+//                handleAck(packet, tcpPipe)
+//            }
         }
     }
 
@@ -170,6 +173,8 @@ object TcpWorker : Runnable {
 
         tcpPipe.packId++
 
+        SimpleLogger.logPacket(packet, "sendTcpPack Point A")
+
         // insert packet into buffer
         val byteBuffer = packet?.updateTCPBuffer(
             flag,
@@ -178,14 +183,19 @@ object TcpWorker : Runnable {
             data
         )
 
+        SimpleLogger.logPacket(packet, "sendTcpPack Point B")
+
         if (byteBuffer != null) {
-            PacketLogsWorker.addPacketToQueue(byteBuffer, packet, false)
+//            PacketLogsWorker.addPacketToQueue(byteBuffer, packet, false)
+//            SimpleLogger.logPacket(packet, byteBuffer, false, "${tcpPipe.tcbStatus}")
+            SimpleLogger.logPacket(packet, "sendTcpPack Point C")
+            ToDeviceQueueWorker.sendPacketToDevice(byteBuffer)
         }
 
         packet?.release()
 
         // send packet to device
-        networkToDeviceQueue.offer(byteBuffer)
+//        networkToDeviceQueue.offer(byteBuffer)
 
         if ((flag and TCPHeader.SYN.toByte()) != 0.toByte()) {
             tcpPipe.mySequenceNum++
@@ -257,7 +267,7 @@ object TcpWorker : Runnable {
                 tcpPipe.remoteSocketChannel.shutdownOutput()
             } else {
                 //todo The following sentence will cause the socket to not be processed correctly, but is it okay to not handle it here?
-//                tcpPipe.remoteSocketChannel.close()
+                tcpPipe.remoteSocketChannel.close()
             }
         }
         return true

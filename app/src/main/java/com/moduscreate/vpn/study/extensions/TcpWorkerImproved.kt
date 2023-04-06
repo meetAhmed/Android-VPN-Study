@@ -1,32 +1,31 @@
 package com.moduscreate.vpn.study.extensions
 
+import com.moduscreate.vpn.study.dataModels.TCBStatus
 import com.moduscreate.vpn.study.protocol.Packet
 import com.moduscreate.vpn.study.protocol.TCPHeader
-import com.moduscreate.vpn.study.dataModels.TCBStatus
+import com.moduscreate.vpn.study.utils.SimpleLogger
 import com.moduscreate.vpn.study.vpn.tcp.TcpPipe
 import com.moduscreate.vpn.study.vpn.tcp.TcpWorker
+import com.moduscreate.vpn.study.vpn.tcp.TcpWorkerImproved
+import com.moduscreate.vpn.study.vpn.tcp.tryFlushWrite
 import kotlin.experimental.or
 
 /**
  * Sync packet received, reply with sync-ack packet.
  * TCP hand shake.
  */
-fun TcpWorker.handleSyn(packet: Packet, tcpPipe: TcpPipe) {
+fun handleSyn(packet: Packet, tcpPipe: TcpPipe) {
     if (tcpPipe.tcbStatus == TCBStatus.SYN_SENT) {
         tcpPipe.tcbStatus = TCBStatus.SYN_RECEIVED
     }
     val tcpHeader = packet.tcpHeader
     tcpPipe.apply {
-        if (synCount == 0) {
-            mySequenceNum = 1
-            theirSequenceNum = tcpHeader.sequenceNumber
-            myAcknowledgementNum = tcpHeader.sequenceNumber + 1
-            theirAcknowledgementNum = tcpHeader.acknowledgementNumber
-            sendTcpPack(this, TCPHeader.SYN.toByte() or TCPHeader.ACK.toByte())
-        } else {
-            myAcknowledgementNum = tcpHeader.sequenceNumber + 1
-        }
-        synCount++
+        mySequenceNum = tcpHeader.sequenceNumber + 1
+        theirSequenceNum = tcpHeader.sequenceNumber
+        myAcknowledgementNum = tcpHeader.sequenceNumber + 1
+        theirAcknowledgementNum = tcpHeader.acknowledgementNumber
+        SimpleLogger.logPacket(packet, "Sending packet")
+        TcpWorker.sendTcpPack(this, TCPHeader.SYN.toByte() or TCPHeader.ACK.toByte())
     }
 }
 
@@ -34,7 +33,7 @@ fun TcpWorker.handleSyn(packet: Packet, tcpPipe: TcpPipe) {
  * Reset packet received.
  * Close socket.
  */
-fun TcpWorker.handleRst(tcpPipe: TcpPipe) {
+fun TcpWorkerImproved.handleRst(tcpPipe: TcpPipe) {
     tcpPipe.apply {
         upActive = false
         downActive = false
@@ -47,10 +46,10 @@ fun TcpWorker.handleRst(tcpPipe: TcpPipe) {
  * Fin packet received.
  * Close socket.
  */
-fun TcpWorker.handleFin(packet: Packet, tcpPipe: TcpPipe) {
+fun TcpWorkerImproved.handleFin(packet: Packet, tcpPipe: TcpPipe) {
     tcpPipe.myAcknowledgementNum = packet.tcpHeader.sequenceNumber + 1
     tcpPipe.theirAcknowledgementNum = packet.tcpHeader.acknowledgementNumber + 1
-    sendTcpPack(tcpPipe, TCPHeader.ACK.toByte())
+    TcpWorker.sendTcpPack(tcpPipe, TCPHeader.ACK.toByte())
     tcpPipe.closeUpStream()
     tcpPipe.tcbStatus = TCBStatus.CLOSE_WAIT
 }
@@ -61,7 +60,7 @@ fun TcpWorker.handleFin(packet: Packet, tcpPipe: TcpPipe) {
  * Write packet data to Destination, if it is not empty.
  * Send back ACK to device.
  */
-fun TcpWorker.handleAck(packet: Packet, tcpPipe: TcpPipe) {
+fun TcpWorkerImproved.handleAck(packet: Packet, tcpPipe: TcpPipe) {
     if (tcpPipe.tcbStatus == TCBStatus.SYN_RECEIVED) {
         tcpPipe.tcbStatus = TCBStatus.ESTABLISHED
     }
@@ -83,6 +82,6 @@ fun TcpWorker.handleAck(packet: Packet, tcpPipe: TcpPipe) {
         theirAcknowledgementNum = tcpHeader.acknowledgementNumber
         remoteOutBuffer = packet.backingBuffer
         tryFlushWrite(this)
-        sendTcpPack(this, TCPHeader.ACK.toByte())
+        TcpWorker.sendTcpPack(this, TCPHeader.ACK.toByte())
     }
 }

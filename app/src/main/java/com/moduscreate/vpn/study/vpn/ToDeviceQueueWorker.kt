@@ -1,49 +1,34 @@
 package com.moduscreate.vpn.study.vpn
 
+import com.moduscreate.vpn.study.protocol.Packet
 import com.moduscreate.vpn.study.utils.SimpleLogger
+import com.moduscreate.vpn.study.utils.SimpleLoggerTag
 import java.io.FileDescriptor
 import java.io.FileOutputStream
+import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 
-object ToDeviceQueueWorker : Runnable {
-    private const val TAG = "ToDeviceQueueWorker"
-    private lateinit var thread: Thread
-    var totalOutputCount = 0L
-    private lateinit var vpnOutput: FileChannel
+object ToDeviceQueueWorker {
+    private var vpnOutput: FileChannel? = null
 
     fun start(vpnFileDescriptor: FileDescriptor) {
-        if (this::thread.isInitialized && thread.isAlive) throw IllegalStateException("ToDeviceQueueWorker start IllegalStateException")
         vpnOutput = FileOutputStream(vpnFileDescriptor).channel
-        thread = Thread(this).apply {
-            name = TAG
-            start()
-        }
     }
 
-    fun stop() {
-        if (this::thread.isInitialized) {
-            thread.interrupt()
-        }
-    }
-
-    /**
-     * Send network packet to device.
-     * Both UDP and TCP.
-     */
-    override fun run() {
-        try {
-            while (!thread.isInterrupted) {
-                val byteBuffer = networkToDeviceQueue.take()
-                byteBuffer.flip()
-                while (byteBuffer.hasRemaining()) {
-                    val count = vpnOutput.write(byteBuffer)
-                    if (count > 0) {
-                        totalOutputCount += count
-                    }
-                }
-            }
-        } catch (error: Exception) {
-            SimpleLogger.log("ToDeviceQueueWorker: run() error $error")
+    fun sendPacketToDevice(byteBuffer: ByteBuffer) {
+//        val byteBuffer2 = byteBuffer.duplicate().also { it.position(0) }
+//        val packet = Packet(byteBuffer2)
+        SimpleLogger.log( "sendTcpPack Point D", SimpleLoggerTag.TcpPacket)
+//        val logTextBefore = "position = ${byteBuffer.position()} limit = ${byteBuffer.limit()}"
+        byteBuffer.position(0)
+//        val logTextAfter = "position = ${byteBuffer.position()} limit = ${byteBuffer.limit()}"
+        while (byteBuffer.hasRemaining()) {
+            SimpleLogger.log( "sendTcpPack Point E", SimpleLoggerTag.TcpPacket)
+            SimpleLogger.logPacket(
+                byteBuffer,
+                ""
+            )
+            vpnOutput?.write(byteBuffer)
         }
     }
 }

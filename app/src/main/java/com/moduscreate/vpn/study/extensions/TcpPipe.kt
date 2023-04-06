@@ -1,10 +1,12 @@
 package com.moduscreate.vpn.study.extensions
 
 import android.os.Build
-import com.moduscreate.vpn.study.protocol.TCPHeader
 import com.moduscreate.vpn.study.dataModels.TCBStatus
+import com.moduscreate.vpn.study.protocol.TCPHeader
 import com.moduscreate.vpn.study.vpn.tcp.TcpPipe
 import com.moduscreate.vpn.study.vpn.tcp.TcpWorker
+import com.moduscreate.vpn.study.vpn.tcp.TcpWorkerImproved
+import com.moduscreate.vpn.study.vpn.tcp.tryFlushWrite
 import java.nio.ByteBuffer
 import java.nio.channels.SelectionKey
 import kotlin.experimental.or
@@ -26,7 +28,7 @@ fun TcpPipe.doRead() {
     val buffer = ByteBuffer.allocate(20000)
     var isQuitType = false
 
-    while (!TcpWorker.thread.isInterrupted) {
+    while (!TcpWorkerImproved.thread.isInterrupted) {
         buffer.clear()
         val length = remoteSocketChannel.read(buffer)
         if (length == -1) {
@@ -53,10 +55,12 @@ fun TcpPipe.doRead() {
  * Connection.
  */
 fun TcpPipe.doConnect() {
-    remoteSocketChannel.finishConnect()
-    timestamp = System.currentTimeMillis()
-    remoteOutBuffer?.flip()
-    remoteSocketChannelKey.interestOps(SelectionKey.OP_READ or SelectionKey.OP_WRITE)
+    if (remoteSocketChannel.isConnectionPending) {
+        remoteSocketChannel.finishConnect()
+        timestamp = System.currentTimeMillis()
+        remoteOutBuffer?.flip()
+        remoteSocketChannelKey.interestOps(SelectionKey.OP_READ or SelectionKey.OP_WRITE)
+    }
 }
 
 /**
@@ -64,7 +68,7 @@ fun TcpPipe.doConnect() {
  * Add Read as channel interest, to read data from server.
  */
 fun TcpPipe.doWrite() {
-    if (TcpWorker.tryFlushWrite(this)) {
+    if (TcpWorkerImproved.tryFlushWrite(this)) {
         remoteSocketChannelKey.interestOps(SelectionKey.OP_READ)
     }
 }
@@ -79,6 +83,7 @@ fun TcpPipe.clean() {
         }
         remoteOutBuffer = null
         TcpWorker.pipeMap.remove(tunnelKey)
+        TcpWorkerImproved.pipeMap.remove(tunnelKey)
     }.exceptionOrNull()?.printStackTrace()
 }
 
