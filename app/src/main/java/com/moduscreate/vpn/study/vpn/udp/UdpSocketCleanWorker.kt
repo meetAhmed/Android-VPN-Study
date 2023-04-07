@@ -33,9 +33,9 @@ object UdpSocketCleanWorker : Runnable {
                         removeCount++
                     }
                 }
-                if (removeCount > 0) {
-                    SimpleLogger.log("UdpSocketCleanWorker: Removed $removeCount timeout inactive UDPs, Queue Size Now: ${udpSocketMap.size}")
-                }
+//                if (removeCount > 0) {
+//                    SimpleLogger.log("UdpSocketCleanWorker: Removed $removeCount timeout inactive UDPs, Queue Size Now: ${udpSocketMap.size}")
+//                }
             }
             Thread.sleep(INTERVAL_TIME * 1000)
         }

@@ -7,9 +7,9 @@ import java.nio.ByteBuffer
 import java.nio.channels.Selector
 import java.util.concurrent.ArrayBlockingQueue
 
-
 // TCP
-val deviceToNetworkTCPQueue = ArrayBlockingQueue<Packet>(1024)
+val deviceToNetworkTCPQueue = ArrayBlockingQueue<Packet>(1024 * 3)
+//val deviceToNetworkTCPQueue = LinkedBlockingQueue<Packet>()
 val tcpNioSelector: Selector = Selector.open()
 
 // UDP

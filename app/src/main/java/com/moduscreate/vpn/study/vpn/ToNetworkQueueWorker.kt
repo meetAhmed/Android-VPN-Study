@@ -4,6 +4,7 @@ import com.moduscreate.vpn.study.extensions.toHex
 import com.moduscreate.vpn.study.protocol.Packet
 import com.moduscreate.vpn.study.utils.SimpleLogger
 import com.moduscreate.vpn.study.utils.SimpleLoggerTag
+import com.moduscreate.vpn.study.vpn.tcp.TcpWorker
 import java.io.FileDescriptor
 import java.io.FileInputStream
 import java.nio.ByteBuffer
@@ -65,10 +66,12 @@ object ToNetworkQueueWorker : Runnable {
 
                 when {
                     packet.isUDP -> deviceToNetworkUDPQueue.offer(packet)
-                    packet.isTCP -> deviceToNetworkTCPQueue.offer(packet)
+                    packet.isTCP -> {
+                        deviceToNetworkTCPQueue.offer(packet)
+//                        SimpleLogger.log("[Device] [${deviceToNetworkTCPQueue.size} [${networkToDeviceQueue.size}] [${TcpWorker.pipeMap.size}] ] [ " + packet.tcpHeader.printSimple() + "] " + byteBuffer.toHex(), SimpleLoggerTag.TcpPacket)
+                    }
                 }
 
-                SimpleLogger.log(byteBuffer.toHex(), SimpleLoggerTag.PacketFromDevice)
             } else if (readCount < 0) {
                 break
             }

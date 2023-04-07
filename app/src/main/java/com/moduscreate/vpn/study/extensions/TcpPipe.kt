@@ -3,6 +3,8 @@ package com.moduscreate.vpn.study.extensions
 import android.os.Build
 import com.moduscreate.vpn.study.protocol.TCPHeader
 import com.moduscreate.vpn.study.dataModels.TCBStatus
+import com.moduscreate.vpn.study.utils.SimpleLogger
+import com.moduscreate.vpn.study.utils.SimpleLoggerTag
 import com.moduscreate.vpn.study.vpn.tcp.TcpPipe
 import com.moduscreate.vpn.study.vpn.tcp.TcpWorker
 import java.nio.ByteBuffer
@@ -45,6 +47,7 @@ fun TcpPipe.doRead() {
     }
 
     if (isQuitType) {
+//        SimpleLogger.log("TcpPipe.doRead() isQuitType true ${debugKey()}", SimpleLoggerTag.TcpPacket)
         closeDownStream()
     }
 }

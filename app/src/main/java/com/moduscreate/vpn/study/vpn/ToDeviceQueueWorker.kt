@@ -43,7 +43,7 @@ object ToDeviceQueueWorker : Runnable {
                 }
             }
         } catch (error: Exception) {
-            SimpleLogger.log("ToDeviceQueueWorker: run() error $error")
+//            SimpleLogger.log("ToDeviceQueueWorker: run() error $error")
         }
     }
 }

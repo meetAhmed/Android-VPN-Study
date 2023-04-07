@@ -108,8 +108,8 @@ public class TCPHeader {
         if (isPSH()) sb.append("PSH ");
         if (isACK()) sb.append("ACK ");
         if (isURG()) sb.append("URG ");
-        sb.append("seq ").append(sequenceNumber).append(" ");
-        sb.append("ack ").append(acknowledgementNumber).append(" ");
+//        sb.append("seq ").append(sequenceNumber).append(" ");
+//        sb.append("ack ").append(acknowledgementNumber).append(" ");
         return sb.toString();
     }
 

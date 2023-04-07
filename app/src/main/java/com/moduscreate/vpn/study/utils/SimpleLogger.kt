@@ -12,4 +12,5 @@ enum class SimpleLoggerTag(val tagValue: String) {
     General("SimpleLogger"),
     PacketToDevice("Packet_To_Device"),
     PacketFromDevice("Packet_From_Device"),
+    TcpPacket("Tcp_Packet"),
 }

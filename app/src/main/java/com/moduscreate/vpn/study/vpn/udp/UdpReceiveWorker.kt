@@ -59,7 +59,7 @@ object UdpReceiveWorker : Runnable {
         // send packet to device
         networkToDeviceQueue.offer(byteBuffer)
 
-        SimpleLogger.log("UDP Packet: ${byteBuffer.toHex()}", SimpleLoggerTag.PacketToDevice)
+//        SimpleLogger.log("UDP Packet: ${byteBuffer.toHex()}", SimpleLoggerTag.PacketToDevice)
     }
 
     /**

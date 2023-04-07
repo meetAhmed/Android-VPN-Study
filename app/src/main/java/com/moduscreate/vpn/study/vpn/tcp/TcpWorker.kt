@@ -79,7 +79,8 @@ object TcpWorker : Runnable {
                 pipeMap[ipAndPort] = pipe
                 pipe
             } else {
-                pipeMap[ipAndPort] ?: throw IllegalStateException("There should be no null key in pipeMap:$ipAndPort")
+                pipeMap[ipAndPort]
+                    ?: throw IllegalStateException("There should be no null key in pipeMap:$ipAndPort")
             }
             handlePacket(packet, tcpPipe)
         }
@@ -118,7 +119,7 @@ object TcpWorker : Runnable {
                         }
                         null
                     }.exceptionOrNull()?.let {
-                        SimpleLogger.log("TcpWorker error $it")
+                        SimpleLogger.log("TcpWorker error $it ${tcpPipe?.debugKey()}")
                         it.printStackTrace()
                         tcpPipe?.closeRst()
                     }
@@ -189,14 +190,18 @@ object TcpWorker : Runnable {
             tcpPipe.myAcknowledgementNum,
             dataSize
         )
-        packet?.release()
 
         byteBuffer.position(TCP_HEADER_SIZE + dataSize)
 
         // send packet to device
         networkToDeviceQueue.offer(byteBuffer)
 
-        SimpleLogger.log("TCP Packet: ${byteBuffer.toHex()}", SimpleLoggerTag.PacketToDevice)
+//        SimpleLogger.log(
+//            "[Network] [${tcpPipe.debugKey()}] [ " + packet.tcpHeader.printSimple() + "] " + byteBuffer.toHex(),
+//            SimpleLoggerTag.TcpPacket
+//        )
+
+        packet?.release()
 
         if ((flag and TCPHeader.SYN.toByte()) != 0.toByte()) {
             tcpPipe.mySequenceNum++
@@ -268,7 +273,7 @@ object TcpWorker : Runnable {
                 tcpPipe.remoteSocketChannel.shutdownOutput()
             } else {
                 //todo The following sentence will cause the socket to not be processed correctly, but is it okay to not handle it here?
-//                tcpPipe.remoteSocketChannel.close()
+                tcpPipe.remoteSocketChannel.close()
             }
         }
         return true

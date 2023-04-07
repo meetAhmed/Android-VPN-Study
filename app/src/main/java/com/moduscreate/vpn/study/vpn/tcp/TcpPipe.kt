@@ -50,4 +50,8 @@ class TcpPipe(val tunnelKey: String, packet: Packet) {
         }
         return result
     }
+
+    fun debugKey(): String {
+        return "Dest: " + destinationAddress.hostName.trim() + " Source: " + sourceAddress.hostName.trim()
+    }
 }
